@@ -1,0 +1,35 @@
+
+# Keep empty file
+!empty
+
+
+# AWS
+AwsCredentials.properties
+.idea
+target/
+
+# Eclipse
+.classpath
+.project
+.settings/*
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Vagrant
+.vagrant/
+
+# Filesystem dust / Others
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+.*.sw[a-p]
+*.dat
+*.tmp
+ehthumbs.db
+Thumbs.db
