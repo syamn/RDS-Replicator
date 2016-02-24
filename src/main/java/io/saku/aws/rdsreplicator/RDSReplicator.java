@@ -13,6 +13,8 @@ import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DescribeDBInstancesRequest;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
 import io.saku.aws.rdsreplicator.callback.DummyCallback;
+import io.saku.aws.rdsreplicator.request.CopyRequest;
+import io.saku.aws.rdsreplicator.request.IRequest;
 import io.saku.aws.rdsreplicator.task.CreateReplicaTask;
 
 import java.util.UUID;
@@ -27,8 +29,12 @@ public class RDSReplicator {
     }
 
     public void createCopy(){
+        final CopyRequest request = new CopyRequest();
+
         final CreateReplicaTask createReplicaTask = new CreateReplicaTask(new DummyCallback());
-        createReplicaTask.start();
+        createReplicaTask.start(request);
+
+
     }
 
 

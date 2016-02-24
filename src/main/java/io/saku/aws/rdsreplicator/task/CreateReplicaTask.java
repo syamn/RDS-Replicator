@@ -8,13 +8,15 @@ import com.amazonaws.services.rds.model.DescribeDBInstancesRequest;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
 import io.saku.aws.rdsreplicator.callback.ICallback;
 import io.saku.aws.rdsreplicator.manager.SharedManager;
+import io.saku.aws.rdsreplicator.request.CopyRequest;
+import io.saku.aws.rdsreplicator.request.IRequest;
 
 import java.util.UUID;
 
 /**
  * Created by sakura on 2016/02/24.
  */
-public class CreateReplicaTask extends BaseTask {
+public class CreateReplicaTask extends BaseTask<CopyRequest> {
     final String ORIGINAL_DATABASE_IDENTIFIER = "";
 
     public CreateReplicaTask(ICallback callback) {
@@ -22,7 +24,7 @@ public class CreateReplicaTask extends BaseTask {
     }
 
     @Override
-    public void start() {
+    public void processTask() {
         createReplica();
         done();
     }
@@ -41,12 +43,12 @@ public class CreateReplicaTask extends BaseTask {
         if (describeDBInstancesResult.getDBInstances().size() != 1){
             throw new InternalErrorException("Specified original database " + originalIdentifier + " was not found.");
         }
-        final DBInstance original = describeDBInstancesResult.getDBInstances().get(0);
+        this.request.setOriginalRDS(describeDBInstancesResult.getDBInstances().get(0));
 
         // Create Read Replica branched from original resource
         final DBInstance replica = rds.createDBInstanceReadReplica(
                 new CreateDBInstanceReadReplicaRequest()
-                        .withSourceDBInstanceIdentifier(original.getDBInstanceIdentifier())
+                        .withSourceDBInstanceIdentifier(this.request.getOriginalRDS().getDBInstanceIdentifier())
                         .withDBInstanceIdentifier(replicaIdentifier)
         );
         System.out.printf("Replica");
