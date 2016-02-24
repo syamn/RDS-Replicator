@@ -10,7 +10,7 @@ public class Main {
 
         final RDSReplicator replicator = new RDSReplicator();
 
-        replicator.createReplica();
+        replicator.createCopy();
 
         System.out.println("completed");
 
