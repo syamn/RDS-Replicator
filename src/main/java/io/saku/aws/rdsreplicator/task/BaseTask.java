@@ -23,6 +23,7 @@ abstract public class BaseTask<T extends IRequest>{
 
     public final void start(T request){
         this.request = request;
+        this.processTask();
     }
 
     protected abstract void processTask();
