@@ -2,10 +2,10 @@ package io.saku.aws.rdsreplicator.task;
 
 import com.amazonaws.services.cognitoidentity.model.InternalErrorException;
 import com.amazonaws.services.rds.AmazonRDS;
-import com.amazonaws.services.rds.model.CreateDBInstanceReadReplicaRequest;
 import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DescribeDBInstancesRequest;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
+import com.amazonaws.services.rds.model.PromoteReadReplicaRequest;
 import io.saku.aws.rdsreplicator.callback.BaseCallback;
 import io.saku.aws.rdsreplicator.checker.ChangesChecker;
 import io.saku.aws.rdsreplicator.checker.CheckerResult;
@@ -16,55 +16,32 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Created by sakura on 2016/02/24.
+ * Created by sakura on 2016/02/25.
  */
-public class CreateReplicaTask extends BaseTask<CopyRequest> {
-    final String ORIGINAL_DATABASE_IDENTIFIER = "awsclitest";
-
-    public CreateReplicaTask(BaseCallback callback) {
+public class PromoteReplicaTask extends BaseTask<CopyRequest> {
+    public PromoteReplicaTask(BaseCallback callback) {
         super(callback);
     }
 
     @Override
     public void processTask() {
-        System.out.println("===== CreateReplicaTask =====");
-        createReplica();
-    }
+        System.out.println("===== PromoteReplicaTask =====");
 
-    public void createReplica(){
-        this.createReplica(this.ORIGINAL_DATABASE_IDENTIFIER, "copied-" + UUID.randomUUID());
-    }
-
-    public void createReplica(final String originalIdentifier, String replicaIdentifier){
         final AmazonRDS rds = SharedManager.getInstance().getRDS();
-
-        // Check original resource
-        final DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(
-                new DescribeDBInstancesRequest().withDBInstanceIdentifier(originalIdentifier)
+        DBInstance response = rds.promoteReadReplica(
+                new PromoteReadReplicaRequest()
+                        .withDBInstanceIdentifier(this.request.getProcessingRDS().getDBInstanceIdentifier())
         );
-        if (describeDBInstancesResult.getDBInstances().size() != 1){
-            throw new InternalErrorException("Specified original database " + originalIdentifier + " was not found.");
-        }
-        this.request.setOriginalRDS(describeDBInstancesResult.getDBInstances().get(0));
 
-        // Create Read Replica branched from original resource
-        final DBInstance replica = rds.createDBInstanceReadReplica(
-                new CreateDBInstanceReadReplicaRequest()
-                        .withSourceDBInstanceIdentifier(this.request.getOriginalRDS().getDBInstanceIdentifier())
-                        .withDBInstanceIdentifier(replicaIdentifier)
-        );
-        this.request.setProcessingRDS(replica);
-
-        System.out.printf("Replica");
-        System.out.println(replica);
 
         // Waiting instance ready
         final Timer t = new Timer();
         final ChangesChecker<String> checker = new ChangesChecker<String>();
         final SimpleDateFormat sdf = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss.S] ");
+        final AtomicBoolean changedModifying = new AtomicBoolean(false);
 
         t.schedule(new TimerTask() {
             @Override
@@ -83,7 +60,11 @@ public class CreateReplicaTask extends BaseTask<CopyRequest> {
                     System.out.println(sdf.format(new Date()) + "Instance changed to: " + String.valueOf(result.getNewValue()).toUpperCase()
                             + " (from: " + String.valueOf(result.getOldValue()).toUpperCase() + ")");
 
-                    if("available".equals(result.getNewValue())){
+                    if (!changedModifying.get() && "modifying".equals(result.getNewValue())){
+                        changedModifying.set(true);
+                    }
+
+                    if (changedModifying.get() && "available".equals(result.getNewValue())){
                         t.cancel();
                         done();
                     }

@@ -12,6 +12,7 @@ import com.amazonaws.services.rds.model.CreateDBInstanceReadReplicaRequest;
 import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DescribeDBInstancesRequest;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
+import io.saku.aws.rdsreplicator.callback.CreateReplicaCallback;
 import io.saku.aws.rdsreplicator.callback.DummyCallback;
 import io.saku.aws.rdsreplicator.request.CopyRequest;
 import io.saku.aws.rdsreplicator.request.IRequest;
@@ -31,7 +32,7 @@ public class RDSReplicator {
     public void createCopy(){
         final CopyRequest request = new CopyRequest();
 
-        final CreateReplicaTask createReplicaTask = new CreateReplicaTask(new DummyCallback());
+        final CreateReplicaTask createReplicaTask = new CreateReplicaTask(new CreateReplicaCallback());
         createReplicaTask.start(request);
 
 

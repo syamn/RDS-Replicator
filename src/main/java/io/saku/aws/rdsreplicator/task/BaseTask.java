@@ -1,6 +1,6 @@
 package io.saku.aws.rdsreplicator.task;
 
-import io.saku.aws.rdsreplicator.callback.ICallback;
+import io.saku.aws.rdsreplicator.callback.BaseCallback;
 import io.saku.aws.rdsreplicator.manager.SharedManager;
 import io.saku.aws.rdsreplicator.request.IRequest;
 
@@ -8,11 +8,11 @@ import io.saku.aws.rdsreplicator.request.IRequest;
  * Created by sakura on 2016/02/24.
  */
 abstract public class BaseTask<T extends IRequest>{
-    final private ICallback callback;
+    final private BaseCallback callback;
     final private SharedManager manager;
     protected T request;
 
-    public BaseTask(final ICallback callback){
+    public BaseTask(final BaseCallback callback){
         this.callback = callback;
         this.manager = SharedManager.getInstance();
     }
@@ -29,6 +29,6 @@ abstract public class BaseTask<T extends IRequest>{
     protected abstract void processTask();
 
     protected final void done(){
-        callback.invoke();
+        callback.invoke(request);
     }
 }
